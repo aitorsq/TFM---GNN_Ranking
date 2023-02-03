@@ -16,6 +16,9 @@ import torch
 
 
 
+
+
+
 def log(val,logfile):
     with open(logfile,'a') as f:
         f.write(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: {val}")
@@ -264,3 +267,43 @@ def graph_to_adj_bet(list_graph,list_n_sequence,list_node_num,model_size):
         list_adjacency_t.append(adj_mat_t)
     print("")          
     return list_adjacency,list_adjacency_t
+
+
+def ranking_correlation(y_out,true_val,node_num,model_size):
+    y_out = y_out.reshape((model_size))
+    true_val = true_val.reshape((model_size))
+
+    predict_arr = y_out.cpu().detach().numpy()
+    true_arr = true_val.cpu().detach().numpy()
+
+
+    kt,_ = kendalltau(predict_arr[:node_num],true_arr[:node_num])
+
+    return kt
+
+
+def loss_cal(y_out,true_val,num_nodes,device,model_size):
+
+    y_out = y_out.reshape((model_size))
+    true_val = true_val.reshape((model_size))
+    
+    _,order_y_true = torch.sort(-true_val[:num_nodes])
+
+    sample_num = num_nodes*20
+
+    ind_1 = torch.randint(0,num_nodes,(sample_num,)).long().to(device)
+    ind_2 = torch.randint(0,num_nodes,(sample_num,)).long().to(device)
+    
+
+    rank_measure=torch.sign(-1*(ind_1-ind_2)).float()
+        
+    input_arr1 = y_out[:num_nodes][order_y_true[ind_1]].to(device)
+    input_arr2 = y_out[:num_nodes][order_y_true[ind_2]].to(device)
+        
+
+    loss_rank = torch.nn.MarginRankingLoss(margin=1.0).forward(input_arr1,input_arr2,rank_measure)
+ 
+    return loss_rank
+
+
+
