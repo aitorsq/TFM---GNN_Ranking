@@ -1,7 +1,7 @@
-/custom/real_graphs/
-/datasets/
-/custom/data_splits/test/
-/custom/data_splits/train/
-/custom/data_splits_scalability_test/
-/custom/graphs/
-/custom/graphs_scalability_test/
+/custom/real_graphs/*
+/datasets/*
+/custom/data_splits/test/*
+/custom/data_splits/train/*
+/custom/data_splits_scalability_test/*
+/custom/graphs/*
+/custom/graphs_scalability_test/*
