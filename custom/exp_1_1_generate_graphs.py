@@ -31,7 +31,7 @@ for graph_type in param["graph_types"]:
         bet_dict = cal_exact_bet(g_nkit)
         list_bet_data.append([g_nx,bet_dict])
 
-    fname_bet = f"./graphs/{graph_type}_{param['num_of_graphs']}graphs_{param['max_nodes']}_{param['min_nodes']}_nodes.pickle"    
+    fname_bet = f"./graphs/{graph_type}_{param['num_of_graphs']}_graphs_{param['max_nodes']}_{param['min_nodes']}_nodes.pickle"    
 
     with open(fname_bet,"wb") as fopen:
         pickle.dump(list_bet_data,fopen)

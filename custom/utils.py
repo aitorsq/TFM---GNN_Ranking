@@ -15,10 +15,6 @@ import torch
 
 
 
-
-
-
-
 def log(val,logfile):
     with open(logfile,'a') as f:
         f.write(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: {val}")
@@ -307,3 +303,84 @@ def loss_cal(y_out,true_val,num_nodes,device,model_size):
 
 
 
+
+
+def train(list_adj_train,list_adj_t_train,list_num_node_train,bc_mat_train,model,device,optimizer,size):
+    model.train()
+    total_count_train = list()
+    loss_train = 0
+    num_samples_train = len(list_adj_train)
+    for i in range(num_samples_train):
+        adj = list_adj_train[i]
+        num_nodes = list_num_node_train[i]
+        adj_t = list_adj_t_train[i]
+        adj = adj.to(device)
+        adj_t = adj_t.to(device)
+
+        optimizer.zero_grad()
+            
+        y_out = model(adj,adj_t)
+        true_arr = torch.from_numpy(bc_mat_train[:,i]).float()
+        true_val = true_arr.to(device)
+        
+        loss_rank = loss_cal(y_out,true_val,num_nodes,device,size)
+        loss_train = loss_train + float(loss_rank)
+        loss_rank.backward()
+        optimizer.step()
+
+
+
+
+def test(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model,device,size):
+    model.eval()
+    loss_val = 0
+    list_kt = list()
+    num_samples_test = len(list_adj_test)
+    for j in range(num_samples_test):
+        adj = list_adj_test[j]
+        adj_t = list_adj_t_test[j]
+        adj=adj.to(device)
+        adj_t = adj_t.to(device)
+        num_nodes = list_num_node_test[j]
+        
+        y_out = model(adj,adj_t)
+    
+        
+        true_arr = torch.from_numpy(bc_mat_test[:,j]).float()
+        true_val = true_arr.to(device)
+    
+        kt = ranking_correlation(y_out,true_val,num_nodes,size)
+        list_kt.append(kt)
+        #g_tmp = list_graph_test[j]
+        #print(f"Graph stats:{g_tmp.number_of_nodes()}/{g_tmp.number_of_edges()},  KT:{kt}")
+
+    print(f"   Average KT score on test graphs is: {np.mean(np.array(list_kt))} and std: {np.std(np.array(list_kt))}")
+    return {"kt":np.mean(np.array(list_kt)), "avg":np.std(np.array(list_kt))}
+
+
+def test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model,device,size):
+    model.eval()
+    loss_val = 0
+    list_kt = list()
+    num_samples_test = len(list_adj_test)
+
+    for j in range(num_samples_test):
+        adj = list_adj_test[j]
+        adj_t = list_adj_t_test[j]
+        adj=adj.to(device)
+        adj_t = adj_t.to(device)
+        num_nodes = list_num_node_test[j]
+        
+        y_out = model(adj,adj_t)
+    
+        
+        true_arr = torch.from_numpy(bc_mat_test[:,j]).float()
+        true_val = true_arr.to(device)
+
+        y_out = y_out.reshape((size))
+        true_val = true_val.reshape((size))
+
+        pred = y_out.cpu().detach().numpy()
+        real = true_val.cpu().detach().numpy()
+
+        return {'pred': pred[:num_nodes], 'true': real[:num_nodes],'kt': kendalltau(pred[:num_nodes],real[:num_nodes])[0]}

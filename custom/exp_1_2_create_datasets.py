@@ -9,7 +9,7 @@ param = {
     "graph_types" : ["ER","SF","GRP"],
     "num_train" : 5,
     "num_test" : 10,
-    "num_copies": 2,
+    "num_copies": 100,
     "files" : ["ER_15_graphs_10000_5000_nodes.pickle",
                "SF_15_graphs_10000_5000_nodes.pickle",
                "GRP_15_graphs_10000_5000_nodes.pickle"]
