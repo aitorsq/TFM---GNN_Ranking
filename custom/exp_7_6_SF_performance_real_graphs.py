@@ -1,5 +1,3 @@
-
- 
 from utils import *
 from model_bet import *
 import argparse
@@ -12,23 +10,18 @@ sizes = [10000,100000,300000,900000]
 Results = {}
 
 for i in range(len(graphs)):
-    for c in [1,10,20,40]:
 
-        g = graphs[i]
-        size = sizes[i]
-        data_test = f'{g}_{size}_size.pickle'
+    g = graphs[i]
+    size = sizes[i]
+    data_test = f'{g}_{size}_size.pickle'
 
-        Results[data_test] = {'true': [],'pred': []}
+    Results[data_test] = {'true': [],'pred': []}
+    #Load test data
+    with open("./data_splits/test/"+data_test,"rb") as fopen:
+        list_graph_test,list_n_seq_test,list_num_node_test,bc_mat_test = pickle.load(fopen)
+    list_adj_test,list_adj_t_test = graph_to_adj_bet(list_graph_test,list_n_seq_test,list_num_node_test,size)
 
-        #Load test data
-        with open("./data_splits/test/"+data_test,"rb") as fopen:
-            list_graph_test,list_n_seq_test,list_num_node_test,bc_mat_test = pickle.load(fopen)
-
-        #Get adjacency matrices from graphs
-        #print(f"Graphs to adjacency conversion.")
-
-        list_adj_test,list_adj_t_test = graph_to_adj_bet(list_graph_test,list_n_seq_test,list_num_node_test,size)
-        
+    for c in [1,10,20,40]:        
         
         data_train = f"SF_5_graphs_10000_nodes_{c}_copies_{size}_size.pickle"
         
@@ -39,7 +32,7 @@ for i in range(len(graphs)):
         #Get adjacency matrices from graphs
         list_adj_train,list_adj_t_train = graph_to_adj_bet(list_graph_train,list_n_seq_train,list_num_node_train,size)
 
-        for seed in range(50):
+        for seed in range(10):
             
             currentresult = {'data_train': data_train, 'seed':seed, 'copies': c}
             
