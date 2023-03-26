@@ -6,6 +6,7 @@ import pandas as pd
 
 graphs = ['1-wiki-Vote','2-soc-Epinions','3-email-EuAll','4-web-Google']
 sizes = [10000,100000,300000,900000]
+epochs = 5
 
 Results = {}
 
@@ -45,23 +46,22 @@ for i in range(len(graphs)):
             model.to(device)
             optimizer = torch.optim.Adam(model.parameters(),lr=0.0005)
 
+#            with torch.no_grad():
+#                r = test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model=model,device=device,size=size)
+#
+#            currentresult['no_train'] = {'pred':r['pred'],'kt':r["kt"]}
+
             train(list_adj_train,list_adj_t_train,list_num_node_train,bc_mat_train,model=model,device=device,optimizer=optimizer,size=size)
-
-            with torch.no_grad():
-                r = test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model=model,device=device,size=size)
-
-            currentresult['no_train'] = {'pred':r['pred'],'kt':r["kt"]}
 
             with torch.no_grad():
                 r = test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model=model,device=device,size=size)
 
             currentresult['train'] = {'pred':r['pred'],'kt':r["kt"]}
 
-
             if len(Results[data_test]['true']) == 0:
                 Results[data_test]['true'] = r['true']
 
             Results[data_test]['pred'].append(currentresult)
 
-            with open("SF_real_performance.pickle","wb") as fopen:
+            with open(f"SF_real_performance_{epochs}_epochs.pickle","wb") as fopen:
                 pickle.dump(Results,fopen)

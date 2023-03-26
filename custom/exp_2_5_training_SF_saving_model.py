@@ -48,5 +48,3 @@ for size in [100000,300000,900000]:
                 saving_model_path = f'./models/size_{size}/SF_5_graphs_'+f'{c}_copies_{nodes}_nodes_{size}_size_{e}_epochs'
 
                 torch.save(model.state_dict(), saving_model_path)
-
-

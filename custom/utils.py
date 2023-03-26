@@ -124,13 +124,20 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
 
 def cal_exact_bet(g_nkit):
 
-    #exact_bet = nx.betweenness_centrality(g_nx,normalized=True)
-
     exact_bet = centrality.Betweenness(g_nkit,normalized=True).run().ranking()
     exact_bet_dict = dict()
     for j in exact_bet:
         exact_bet_dict[j[0]] = j[1]
     return exact_bet_dict
+
+
+def cal_exact_degree(g_nkit):
+
+    exact_deg = centrality.DegreeCentrality(g_nkit,normalized=False).run().ranking()
+    exact_deg_dict = dict()
+    for j in exact_deg:
+        exact_deg_dict[j[0]] = j[1]
+    return exact_deg_dict
 
 
 def reorder_list(input_list,serial_list):
@@ -142,13 +149,15 @@ def create_dataset(list_data,num_copies,adj_size):
     num_data = len(list_data)
     total_num = num_data*num_copies
     cent_mat = np.zeros((adj_size,total_num),dtype=np.float)
+    deg_mat = np.zeros((adj_size,total_num),dtype=np.float)
     list_graph = list()
     list_node_num = list()
     list_n_sequence = list()
     mat_index = 0
+
     for g_data in list_data:
 
-        graph, cent_dict = g_data
+        graph, cent_dict, deg_dict = g_data
         nodelist = [i for i in graph.nodes()]
         assert len(nodelist)==len(cent_dict),"Number of nodes are not equal"
         node_num = len(nodelist)
@@ -162,8 +171,8 @@ def create_dataset(list_data,num_copies,adj_size):
 
             for ind,node in enumerate(tmp_nodelist):
                 cent_mat[ind,mat_index] = cent_dict[node]
+                deg_mat[ind,mat_index] = deg_dict[node]
             mat_index +=  1
-
 
     serial_list = [i for i in range(total_num)]
     random.shuffle(serial_list)
@@ -173,9 +182,9 @@ def create_dataset(list_data,num_copies,adj_size):
     list_node_num = reorder_list(list_node_num,serial_list)
     cent_mat_tmp = cent_mat[:,np.array(serial_list)]
     cent_mat = cent_mat_tmp
-
-    return list_graph, list_n_sequence, list_node_num, cent_mat
-
+    deg_mat_tmp = deg_mat[:,np.array(serial_list)]
+    deg_mat = deg_mat_tmp
+    return list_graph, list_n_sequence, list_node_num, cent_mat, deg_mat
 
 
 def graph_to_adj_bet(list_graph,list_n_sequence,list_node_num,model_size):
@@ -331,7 +340,7 @@ def train(list_adj_train,list_adj_t_train,list_num_node_train,bc_mat_train,model
 
 
 
-def test(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model,device,size):
+def test(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,deg_mat_test,model,device,size):
     model.eval()
     loss_val = 0
     list_kt = list()
@@ -348,17 +357,20 @@ def test(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model,devi
         
         true_arr = torch.from_numpy(bc_mat_test[:,j]).float()
         true_val = true_arr.to(device)
-    
+
+        deg_arr = torch.from_numpy(deg_mat_test[:,j]).float()
+        deg_val = deg_arr.to(device)  
+
         kt = ranking_correlation(y_out,true_val,num_nodes,size)
         list_kt.append(kt)
         #g_tmp = list_graph_test[j]
         #print(f"Graph stats:{g_tmp.number_of_nodes()}/{g_tmp.number_of_edges()},  KT:{kt}")
 
     print(f"   Average KT score on test graphs is: {np.mean(np.array(list_kt))} and std: {np.std(np.array(list_kt))}")
-    return {"kt":np.mean(np.array(list_kt)), "avg":np.std(np.array(list_kt))}
+    return {"kt":np.mean(np.array(list_kt)), "std":np.std(np.array(list_kt))}
 
 
-def test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,model,device,size):
+def test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,deg_mat_test,model,device,size):
     model.eval()
     loss_val = 0
     list_kt = list()
@@ -377,10 +389,15 @@ def test_onegraph(list_adj_test,list_adj_t_test,list_num_node_test,bc_mat_test,m
         true_arr = torch.from_numpy(bc_mat_test[:,j]).float()
         true_val = true_arr.to(device)
 
+        deg_arr = torch.from_numpy(deg_mat_test[:,j]).float()
+        deg_val = deg_arr.to(device) 
+
         y_out = y_out.reshape((size))
         true_val = true_val.reshape((size))
+        deg_val = deg_val.reshape((size))
 
         pred = y_out.cpu().detach().numpy()
         real = true_val.cpu().detach().numpy()
+        deg = deg_val.cpu().detach().numpy()
 
-        return {'pred': pred[:num_nodes], 'true': real[:num_nodes],'kt': kendalltau(pred[:num_nodes],real[:num_nodes])[0]}
+        return {'pred': pred[:num_nodes], 'true': real[:num_nodes],'deg': deg[:num_nodes],'kt': kendalltau(pred[:num_nodes],real[:num_nodes])[0]}

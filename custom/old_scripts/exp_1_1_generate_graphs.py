@@ -5,21 +5,16 @@ param = {
     "min_nodes": 5000,
     "max_nodes": 10000,
     "num_of_graphs": 15,
-    "graph_types": ["ER","SF","GRP"],
-    "logfile":"../logfile.txt"
+    "graph_types": ["ER","SF","GRP"]
 }
 
-log("###############################################################################################",param["logfile"])
-log("Start generating graphs...",param["logfile"])
 for graph_type in param["graph_types"]:
     print("###################")
-    log(f"Generating graph type : {graph_type}",param["logfile"])
     print(f"Generating graph type : {graph_type}")
     print(f"Number of graphs to be generated:{param['num_of_graphs']}")
     list_bet_data = list()
     print("Generating graphs and calculating centralities...")
     for i in range(param['num_of_graphs']):
-        log(f"Graph index:{i+1}/{param['num_of_graphs']}",param["logfile"])
         print(f"{datetime.now().strftime('%d/%m/%Y %H:%M:%S')}: Graph index:{i+1}/{param['num_of_graphs']}")
         g_nx = create_graph(graph_type,param['min_nodes'],param['max_nodes'])
         
@@ -38,6 +33,3 @@ for graph_type in param["graph_types"]:
 
     print("")
     print("Graphs saved")
-
-log("Finished",param["logfile"])
-log("###############################################################################################",param["logfile"])
