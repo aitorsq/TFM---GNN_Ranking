@@ -22,3 +22,5 @@ __pycache__
 /custom/delivery/graphs/*
 /custom/delivery/graphs_scalability_test/*
 /custom/delivery/real_graphs/bet_real_graphs/*
+/delivery/real_graphs/bet_real_graphs/*
+/delivery/real_graphs/original/*
