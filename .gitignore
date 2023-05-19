@@ -3,6 +3,7 @@ __pycache__
 /delivery/graphs/*
 /delivery/models/*
 /delivery/real_graphs/*
+/delivery/*
 
 /custom/data_splits/*
 /custom/data_splits_scalability_test/*
